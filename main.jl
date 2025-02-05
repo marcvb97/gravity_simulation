@@ -49,7 +49,7 @@ using Revise
 import Base: +, -, *
 
 # Number of particles
-const N = 100
+const N = 1000
 
 
 struct Point{T}
@@ -89,17 +89,20 @@ end
 
 # Initialize particles in spiralform
 function gen_particle02()
-    speed = 2.0
+    speed = 0.75
     T = Float64
     pos = Point(rand(T) * 2 - 1, rand(T) * 2 - 1) * 0.1
     vel = Point(-pos.y,pos.x)
-    vel = vel * (1/norm(vel)^1.0) * speed
+    vel = vel * (1/norm(vel)^2.0) * speed
     temp = 1.0;
     mass = 0.01;
     return Particle(pos,vel,mass,temp)
 end
 
 particles = [gen_particle02() for _ in 1:N]
+particles[1].pos = Point(0.0,0.0)
+particles[1].vel = Point(0.0,0.0)
+particles[1].mass = 1.00
 
 # Assumes all particles have the same mass
 function set_zero_momentum!(particles::Array{Particle})
@@ -156,9 +159,9 @@ function total_mass(particles)
 end
 
 function collision_particles(particles)
-    r = 0.001
+    r = 0.0001
     t_mass = total_mass(particles)
-    println("begin collision_particles ",t_mass)
+    # println("begin collision_particles ",t_mass)
     # sleep(0.5)
     i = 1
     while i <= length(particles)
@@ -169,7 +172,7 @@ function collision_particles(particles)
             diff = q.pos-p.pos
             dist = sqrt(diff.x*diff.x+diff.y*diff.y)
             if dist < r
-                println("two particles collapse into one",i,j)
+                # println("two particles collapse into one",i,j)
                 p.mass = p.mass+q.mass
                 p.vel = (p.vel*p.mass+q.vel*q.mass) * (1 / (p.mass+q.mass))
                 p.pos = (p.pos*p.mass+q.pos*q.mass) * (1 / (p.mass+q.mass))
@@ -188,16 +191,16 @@ function collision_particles(particles)
         check_mass(particles,t_mass)
     end
     t_mass = total_mass(particles)
-    println("end collision_particles ",t_mass)
+    # println("end collision_particles ",t_mass)
     return particles
 end
 
 function new_position(particles,h)
     particles = collision_particles(particles)
     dt = 0.0001
-    println("point 4 :",total_mass(particles))
+    # println("point 4 :",total_mass(particles))
     particles_new = copy.(particles)
-    println("point 5 :",total_mass(particles_new))
+    # println("point 5 :",total_mass(particles_new))
     i = 0
     for j = 1:length(particles)
         p = particles[j]
@@ -224,14 +227,14 @@ function new_position(particles,h)
         # println(d3)
         # sleep(1)
         i = i+1
-        particles_new[i].vel += k1 * dt * h * (1/p.mass)
+        particles_new[i].vel += k_average * dt * h * (1/p.mass)
         particles_new[i].pos += p.vel*dt * h 
-        if abs(particles_new[i].pos.x) > +1
-            particles_new[i].vel = Point(-particles_new[i].vel.x,particles_new[i].vel.y)
-        end
-        if abs(particles_new[i].pos.y) > +1
-            particles_new[i].vel = Point(particles_new[i].vel.x,-particles_new[i].pos.y)
-        end
+        # if abs(particles_new[i].pos.x) > +1
+        #     particles_new[i].vel = Point(-particles_new[i].vel.x,particles_new[i].vel.y)
+        # end
+        # if abs(particles_new[i].pos.y) > +1
+        #     particles_new[i].vel = Point(particles_new[i].vel.x,-particles_new[i].pos.y)
+        # end
     end
     return particles_new
 end
@@ -242,8 +245,9 @@ function plot_point(cc,p,v,a,b,c,d,k)
     i = n + (p.y-c)*(1-n)/(d-c)
     i = round(Int,i)
     j = round(Int,j)
-    cc[i-k:i+k,j-k:j+k] .= v
-
+    if (i-k >= 1) & (i+k <= n) & (j-k >= 1) & (j+k <=m)
+        cc[i-k:i+k,j-k:j+k] .= v
+    end
 end
 
 
@@ -251,11 +255,11 @@ c[1:h,1:w] .= 0.0
 # Run the simulation
 particles_plot = particles
 for step in 1:100000
-    println(step)
+    # println(step)
     # update position of particles
-    println("point 3 :",total_mass(particles))
+    # println("point 3 :",total_mass(particles))
     particles_new = new_position(particles,1.0)
-    println("point 1 :",total_mass(particles_new))
+    # println("point 1 :",total_mass(particles_new))
 
     # Update visualization
     # plt[1] = [p.pos.x for p in particles]
@@ -269,10 +273,21 @@ for step in 1:100000
         for p in particles
             plot_point(c,p.pos,1.0,-1.25,+1.25,-1.25,+1.25,round(Int,sqrt(p.mass*100)))
         end
+        # sleep(0.00001)
     end
     particles = particles_new
-    println("point 2 :",total_mass(particles_new))
+    # println("point 2 :",total_mass(particles_new))
     # sleep(0.000001)
+    if mod(step,1000) == 0
+        println("number of praticles: ",length(particles))
+        max_mass = 0.0
+        for p in particles
+            if p.mass > max_mass
+                max_mass = p.mass
+            end
+        end
+        println("heaviest particle has mass: ",max_mass)
+    end
 end
 
 close(c)
