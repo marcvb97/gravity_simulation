@@ -49,7 +49,7 @@ using Revise
 import Base: +, -, *
 
 # Number of particles
-const N = 1000
+const N = 2000
 
 
 struct Point{T}
@@ -88,21 +88,17 @@ function gen_particle()
 end
 
 # Initialize particles in spiralform
-function gen_particle02()
-    speed = 0.75
+function gen_particle02(speed,e)
+    # speed = 1.5
     T = Float64
     pos = Point(rand(T) * 2 - 1, rand(T) * 2 - 1) * 0.1
     vel = Point(-pos.y,pos.x)
-    vel = vel * (1/norm(vel)^2.0) * speed
+    vel = vel * (1/norm(vel)^e) * speed
     temp = 1.0;
     mass = 0.01;
     return Particle(pos,vel,mass,temp)
 end
 
-particles = [gen_particle02() for _ in 1:N]
-particles[1].pos = Point(0.0,0.0)
-particles[1].vel = Point(0.0,0.0)
-particles[1].mass = 1.00
 
 # Assumes all particles have the same mass
 function set_zero_momentum!(particles::Array{Particle})
@@ -113,7 +109,7 @@ function set_zero_momentum!(particles::Array{Particle})
         p.vel -= momentum_per_mass * p.mass
     end
 end
-set_zero_momentum!(particles)
+
 
 # Visualization using GLMakie
 # fig, ax, plt = scatter([p.pos.x for p in particles], [p.pos.y for p in particles], color=:blue, markersize=10)
@@ -159,7 +155,7 @@ function total_mass(particles)
 end
 
 function collision_particles(particles)
-    r = 0.0001
+    r = 0.0002
     t_mass = total_mass(particles)
     # println("begin collision_particles ",t_mass)
     # sleep(0.5)
@@ -250,15 +246,33 @@ function plot_point(cc,p,v,a,b,c,d,k)
     end
 end
 
+# Number of particles
+const N = 10000
+particles = [gen_particle02(2.0,2.0) for _ in 1:N]
+particles[1].pos = Point(0.0,0.0)
+particles[1].vel = Point(0.0,0.0)
+particles[1].mass = 100.00
+set_zero_momentum!(particles)
+
+
+function center_particle_1!(particles)
+    pos1 = particles[1].pos
+    for i = 2:length(particles)
+        particles[i].pos = particles[i].pos - pos1
+    end
+    particles[1].pos = particles[1].pos - pos1
+end
 
 c[1:h,1:w] .= 0.0
+d = zeros(h,w)
 # Run the simulation
 particles_plot = particles
-for step in 1:100000
+for step in 1:1000000
     # println(step)
     # update position of particles
     # println("point 3 :",total_mass(particles))
     particles_new = new_position(particles,1.0)
+    center_particle_1!(particles_new)
     # println("point 1 :",total_mass(particles_new))
 
     # Update visualization
@@ -266,13 +280,16 @@ for step in 1:100000
     # plt[2] = [p.pos.y for p in particles]
     if mod(step,10) == 0
         for p in particles_plot
-            plot_point(c,p.pos,0.0,-1.25,+1.25,-1.25,+1.25,round(Int,sqrt(p.mass*100)))
+            size = round(Int,(p.mass*100)^(1/3))
+            plot_point(d,p.pos,0.0,-1.25,+1.25,-1.25,+1.25,size)
         end
         
         particles_plot = particles
         for p in particles
-            plot_point(c,p.pos,1.0,-1.25,+1.25,-1.25,+1.25,round(Int,sqrt(p.mass*100)))
+            size = round(Int,(p.mass*100)^(1/3))
+            plot_point(d,p.pos,1.0,-1.25,+1.25,-1.25,+1.25,size)
         end
+        c[:,:] = d
         # sleep(0.00001)
     end
     particles = particles_new
