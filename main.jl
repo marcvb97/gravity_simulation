@@ -37,7 +37,8 @@ d = zeros(h,w)
 particles_plot = particles
 
 ## Run the simulation
-for step in 1:10000
+zoomlvl = 2
+for step in 1:100
     # println(step)
     # update position of particles
     # println("point 3 :",total_mass(particles))
@@ -52,14 +53,14 @@ for step in 1:10000
         for p in particles_plot
             size = round(Int,(p.mass*100)^(1/3))
             # plot_point(d,p.pos,0.0,-2.0,+2.0,-2.0,+2.0,size)
-            plot_point(d,p.pos,0.0,-10.0,+10.0,-10.0,+10.0,size)
+            plot_point(d,p.pos,0.0,-zoomlvl,+zoomlvl,-zoomlvl,+zoomlvl,size)
         end
         
         particles_plot = particles
         for p in particles
             size = round(Int,(p.mass*100)^(1/3))
             # plot_point(d,p.pos,1.0,-2.0,+2.0,-2.0,+2.0,size)
-            plot_point(d,p.pos,1.0,-10.0,+10.0,-10.0,+10.0,size)
+            plot_point(d,p.pos,1.0,-zoomlvl,+zoomlvl,-zoomlvl,+zoomlvl,size)
         end
         c[:,:] = d
         # sleep(0.00001)
