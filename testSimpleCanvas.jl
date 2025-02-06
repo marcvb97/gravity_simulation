@@ -39,3 +39,16 @@ end
 colormap!(c, cmap) # c::Canvas
 
 name!(c,"Test SimpleCanvas")
+
+##
+using LinearAlgebra
+n = 1000
+M = rand(n,n)
+C = canvas(M)
+colormap!(C, cmap) # c::Canvas
+C.fps = 2
+qr!(C)
+
+for _ in 1:10000
+    SimpleCanvas.redraw(C)
+end

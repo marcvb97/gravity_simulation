@@ -1,9 +1,9 @@
 module Points
 
 import Base: +, -, *
-import LinearAlgebra: norm
+import LinearAlgebra: norm, ⋅
 
-export +,-,*,norm, plot_point, Point
+export +,-,*,norm, plot_point, Point, ⋅
 
 struct Point{T}
     x::T 
@@ -20,9 +20,14 @@ function generate_point(x,y)
 end
 
 function norm(p::Point{T} where T)
-    n = sqrt(p.x*p.x+p.y*p.y)
+    n = sqrt(p ⋅ p)
     return n
 end
+
+function ⋅(p::Point, q::Point)
+    return p.x * q.x + p.y * q.y
+end
+
 
 function plot_point(cc,p,v,a,b,c,d,k)
     # plot point p in matrix cc
